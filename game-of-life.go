@@ -33,7 +33,20 @@ func (w *World) InitBlinker() {
     world.cells[5][6].alive = 1
 }
 
+func (w *World) Print() {
+   world := *w
+   cells := world.cells
+   for i := range cells {
+        for j := range cells {
+            fmt.Printf("%d ", cells[i][j].alive)
+        }
+        fmt.Printf("\n")
+   }
+}
+
 func main() {
-    fmt.Printf("Hello, world\n")
+    world := initWorld(10)
+    world.InitBlinker()
+    world.Print()
 }
 
