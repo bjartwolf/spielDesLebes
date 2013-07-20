@@ -2,6 +2,9 @@ package main
 
 import "fmt"
 import "time"
+import "os"
+import "runtime"
+import "os/exec"
 
 type World struct {
     cells [][]Cell
@@ -11,8 +14,7 @@ type Cell struct {
     x int
     y int
     alive int
-    //inbox chan int // this is where you recieve messages if neighbors are dead or alive
-    outbox chan int // this is where you send messages if neighbors are dead or alive
+    outbox chan int 
 }
 
 func newWorld(size int) World {
@@ -61,19 +63,14 @@ func (w *World) NextRound() {
                     if ((i+1) <= 9 && (j-1) >= 0) {
                         aliveNeighbors += <-cells[i+1][j-1].outbox
                     }
+                // Had to go through world to make it work...
                 if ((aliveNeighbors == 2 || aliveNeighbors ==3)&& cell.alive == 1) {
-                    fmt.Printf("cell keeps on living with 2 or 3 neighbors\n")
                 } else if (cell.alive == 0 && aliveNeighbors == 3) {
-                    fmt.Printf("Cell spawned in position %d, %d\n", cell.x, cell.y)
                     world.cells[i][j].alive = 1
                 } else if (aliveNeighbors > 3) {
                     world.cells[i][j].alive = 0
-                    //cell.alive = 0
-                    fmt.Printf("Killed a cell in position %d, %d\n", cell.x, cell.y)
                 } else if (cell.alive == 1 && aliveNeighbors < 2) {
-                    fmt.Printf("cell dies because fewer than 2 neighbors alive in position %d, %d\n", cell.x, cell.y)
                     world.cells[i][j].alive = 0
-                    //cell.alive = 0
                 }
             }(i, j)
         }
@@ -82,15 +79,13 @@ func (w *World) NextRound() {
     for i := range cells {
         for j := range cells[i] {
             cell := cells[i][j]
-//            go func(cell Cell) {
-                for messages := 0; messages < cell.nrOfNeighbors(); messages++ {
-                    if (cell.alive == 1) {
-                        cell.outbox <- 1
-                    } else {
-                        cell.outbox <- 0
-                    }
+            for messages := 0; messages < cell.nrOfNeighbors(); messages++ {
+                if (cell.alive == 1) {
+                    cell.outbox <- 1
+                } else {
+                    cell.outbox <- 0
                 }
- //           }(cell)
+            }
         }
     }
 }
@@ -119,12 +114,24 @@ func (w *World) InitBlinker() {
     world.cells[6][5].alive = 1
 }
 
+func (w *World) InitGleiter() {
+    world := *w
+    world.cells[0][7].alive = 1
+    world.cells[1][7].alive = 1
+    world.cells[2][7].alive = 1
+    world.cells[2][8].alive = 1
+    world.cells[1][9].alive = 1
+}
+
 func (w *World) Print() {
+   c := exec.Command("clear")
+   c.Stdout = os.Stdout
+   c.Run()
    world := *w
    cells := world.cells
    fmt.Printf("\n")
    for i := range cells {
-        for j := range cells {
+        for j := range cells[i] {
             fmt.Printf("%d ", cells[i][j].alive)
         }
         fmt.Printf("\n")
@@ -132,15 +139,21 @@ func (w *World) Print() {
 }
 
 func main() {
+    runtime.GOMAXPROCS(2)
     world := newWorld(10)
-    world.InitBlinker()
+    world.InitGleiter()
+    //world.InitBlinker()
     world.Print()
-    time.Sleep(100000000)
-    world.NextRound()
-    time.Sleep(100000000)
-    world.Print()
-    world.NextRound()
-    time.Sleep(100000000)
-    world.Print()
+    worlds := 0
+    c := time.Tick(10 * time.Second)
+    go func() {for now := range c {
+        fmt.Printf("Worlds: %d\n", worlds, now)
+    }}()
+    for {
+        //time.Sleep(100000000)
+        worlds++
+        world.NextRound()
+//        world.Print()
+    }
 }
 
