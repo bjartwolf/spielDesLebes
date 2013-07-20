@@ -24,7 +24,8 @@ func newWorld(size int) World {
             cells[i][j] = Cell{i,j,0, make(chan int, 8)}
         }
     }
-    return world }
+    return world
+}
 
 func (w *World) NextRound() {
     world := *w
@@ -32,15 +33,12 @@ func (w *World) NextRound() {
     // All cells should listen for messages from neighbors and then do calculations when messages
     // have been recievd
     for i := range cells {
-        for j := range cells {
-            cell := cells[i][j]
-            go func(cell Cell) {
+        for j := range cells[i] {
+            go func(i, j int) {
+                cell := cells[i][j]
                 aliveNeighbors := 0
-                i := cell.x
-                j := cell.y
                     if ((i-1) >= 0 && (j-1) >= 0) {
-                        var k int  = <-cells[i-1][j-1].outbox
-                        aliveNeighbors += k
+                        aliveNeighbors += <-cells[i-1][j-1].outbox
                     }
                     if ((i-1) >= 0) {
                         aliveNeighbors += <-cells[i-1][j].outbox
@@ -67,22 +65,24 @@ func (w *World) NextRound() {
                     fmt.Printf("cell keeps on living with 2 or 3 neighbors\n")
                 } else if (cell.alive == 0 && aliveNeighbors == 3) {
                     fmt.Printf("Cell spawned in position %d, %d\n", cell.x, cell.y)
-                    cell.alive = 1
+                    world.cells[i][j].alive = 1
                 } else if (aliveNeighbors > 3) {
-                    cell.alive = 0
+                    world.cells[i][j].alive = 0
+                    //cell.alive = 0
                     fmt.Printf("Killed a cell in position %d, %d\n", cell.x, cell.y)
                 } else if (cell.alive == 1 && aliveNeighbors < 2) {
                     fmt.Printf("cell dies because fewer than 2 neighbors alive in position %d, %d\n", cell.x, cell.y)
-                    cell.alive = 0
+                    world.cells[i][j].alive = 0
+                    //cell.alive = 0
                 }
-            }(cell)
+            }(i, j)
         }
     }
     // Then send all messages
     for i := range cells {
         for j := range cells[i] {
             cell := cells[i][j]
-            go func(cell Cell) {
+//            go func(cell Cell) {
                 for messages := 0; messages < cell.nrOfNeighbors(); messages++ {
                     if (cell.alive == 1) {
                         cell.outbox <- 1
@@ -90,7 +90,7 @@ func (w *World) NextRound() {
                         cell.outbox <- 0
                     }
                 }
-            }(cell)
+ //           }(cell)
         }
     }
 }
@@ -135,9 +135,12 @@ func main() {
     world := newWorld(10)
     world.InitBlinker()
     world.Print()
+    time.Sleep(100000000)
     world.NextRound()
-    //time.Sleep(100000000)
-    time.Sleep(1)
+    time.Sleep(100000000)
+    world.Print()
+    world.NextRound()
+    time.Sleep(100000000)
     world.Print()
 }
 
