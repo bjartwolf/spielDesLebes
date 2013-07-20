@@ -10,15 +10,17 @@ type Cell struct {
     x int
     y int
     alive int
+    inbox []chan int
+    outbox []chan int
 }
 
-func initWorld(size int) World {
+func newWorld(size int) World {
     world := World { make([][]Cell, size)}
     cells := world.cells
     for i := range cells {
         cells[i] = make([]Cell, size)
         for j := range(cells[i]) {
-            cells[i][j] = Cell{i,j,0}
+            cells[i][j] = Cell{i,j,0, nil, nil}
         }
     }
     return world
@@ -45,7 +47,7 @@ func (w *World) Print() {
 }
 
 func main() {
-    world := initWorld(10)
+    world := newWorld(10)
     world.InitBlinker()
     world.Print()
 }

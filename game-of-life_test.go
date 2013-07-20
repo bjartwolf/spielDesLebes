@@ -5,7 +5,7 @@ import "testing"
 // In the future they should not really be in a grid
 // but it is much easier for now...
 func Test_initialize_world_correct_size(t *testing.T) {
-    world := initWorld(10)
+    world := newWorld(10)
     if (len(world.cells) != 10) {
         t.Fatal("World should have 10 columns")
     }
@@ -15,14 +15,14 @@ func Test_initialize_world_correct_size(t *testing.T) {
 }
 
 func Test_initialize_world_correct_positions(t *testing.T) {
-    world := initWorld(10)
+    world := newWorld(10)
     if (world.cells[5][5].x != 5) {
         t.Fatal("should be in position 5")
     }
 }
 
 func Test_initialize_blinker(t *testing.T) {
-    world := initWorld(10)
+    world := newWorld(10)
     world.InitBlinker()
     if (world.cells[5][7].alive != 0 ||
         world.cells[6][7].alive != 0 ||
