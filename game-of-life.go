@@ -6,6 +6,9 @@ import (
     "runtime"
 )
 
+const height int = 10
+const width int = 10
+
 type World struct {
     cells [][]Cell
     subscribers []chan bool // This is everyone the cell should notify about turns
@@ -42,12 +45,12 @@ func (c *Cell) notify() {
     }
 }
 
-func newWorld(size int) World {
+func newWorld() World {
     var subscribers []chan bool
-    world := World { make([][]Cell, size), subscribers}
+    world := World { make([][]Cell, height), subscribers}
     cells := world.cells
     for i := range cells {
-        cells[i] = make([]Cell, size)
+        cells[i] = make([]Cell, width)
         for j := range(cells[i]) {
             cells[i][j] = Cell{i,j,false, make(chan bool, 8), nil, make(chan bool)}
             world.Subscribe(cells[i][j].done)
@@ -89,13 +92,13 @@ func (c *Cell) nrOfNeighbors() int{
     cell := *c
     x := cell.x
     y := cell.y
-    if (x == 0 || x == 9 || y == 0 || y == 9) { // sidewall
+    if (x == 0 || x == width-1 || y == 0 || y == height-1) { // sidewall
         nrOfNeighbors -= 3
     }
     if ( (x== 0 && y == 0) ||
-         (x== 9 && y == 0) ||
-         (x== 0 && y == 9) ||
-         (x== 9 && y == 9)) {
+         (x== width-1 && y == 0) ||
+         (x== 0 && y == height-1) ||
+         (x== width-1 && y == height-1)) {
          nrOfNeighbors = 3
     }
     return nrOfNeighbors
@@ -117,6 +120,17 @@ func (w *World) InitGleiter() {
     world.cells[1][9].alive = true
 }
 
+func (w *World) InitToad() {
+    world := *w
+    world.cells[4][4].alive = true
+    world.cells[4][5].alive = true
+    world.cells[4][6].alive = true
+    world.cells[5][5].alive = true
+    world.cells[5][6].alive = true
+    world.cells[5][7].alive = true
+}
+
+
 var generations = 0
 func (w *World) Print() {
    fmt.Println(generations)
@@ -134,9 +148,10 @@ func (w *World) Print() {
 
 func main() {
     runtime.GOMAXPROCS(4)
-    world := newWorld(10)
+   world := newWorld()
  //   world.InitGleiter()
-   world.InitBlinker()
+ //  world.InitBlinker()
+   world.InitToad()
     world.Print()
     cells := world.cells
     for i := range cells {
@@ -173,7 +188,7 @@ func main() {
         }
     }
     time.Sleep(100*time.Millisecond)
-    timer := time.Tick(40* time.Millisecond)
+    timer := time.Tick(200* time.Millisecond)
     i:= 0
     for _ = range timer{
         i++
@@ -181,7 +196,7 @@ func main() {
             world.Print()
 //        }
         world.proceed(false)
-        time.Sleep(30*time.Millisecond)
+        time.Sleep(100*time.Millisecond)
         world.proceed(true)
     }
 }
