@@ -37,7 +37,7 @@ func (c *Cell) Subscribe(subscriber chan bool) { // could return dispose method 
 func (c *Cell) notify() {
     if (c.alive) {
         for _, s := range c.subscribers {
-            go func(s chan bool) { s <-true}(s)
+            s <-true
         }
     }
 }
@@ -177,9 +177,9 @@ func main() {
     i:= 0
     for _ = range timer{
         i++
-        if (i % 11 == 0) {
+//        if (i % 11 == 0) {
             world.Print()
-        }
+//        }
         world.proceed(false)
         time.Sleep(30*time.Millisecond)
         world.proceed(true)
