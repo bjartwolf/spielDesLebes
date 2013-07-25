@@ -3,9 +3,7 @@ package main
 import (
     "fmt"
     "time"
- //   "os"
     "runtime"
-//    "os/exec"
 )
 
 type World struct {
@@ -120,10 +118,7 @@ func (w *World) InitGleiter() {
 }
 
 var generations = 0
-//var c = exec.Command("clear")
-
 func (w *World) Print() {
-//   c.Run()
    fmt.Println(generations)
    generations++
    fmt.Printf("\n")
@@ -138,7 +133,6 @@ func (w *World) Print() {
 }
 
 func main() {
- //   c.Stdout = os.Stdout
     runtime.GOMAXPROCS(4)
     world := newWorld(10)
  //   world.InitGleiter()
@@ -183,9 +177,9 @@ func main() {
     i:= 0
     for _ = range timer{
         i++
-  //      if (i % 11 == 0) {
+        if (i % 11 == 0) {
             world.Print()
-//        }
+        }
         world.proceed(false)
         time.Sleep(30*time.Millisecond)
         world.proceed(true)
