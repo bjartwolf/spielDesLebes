@@ -1,25 +1,17 @@
 package main
 
-import "fmt"
-import "time"
-import "os"
-import "log"
-import "runtime"
-import "os/exec"
+import (
+    "fmt"
+    "time"
+ //   "os"
+    "runtime"
+//    "os/exec"
+)
 
 type World struct {
     cells [][]Cell
-    subscribers []chan bool // This is everyone the cell should notify
+    subscribers []chan bool // This is everyone the cell should notify about turns
 }
-
-type Cell struct {
-    x int
-    y int
-    alive bool
-    neighbors chan bool // This is the channel that subscribes to other neighbors
-    subscribers []chan bool // This is everyone the cell should notify
-    done chan bool
- }
 
 func (w *World) Subscribe (subscriber chan bool) {
     w.subscribers = append(w.subscribers,subscriber)
@@ -30,6 +22,15 @@ func (w *World) proceed(msg bool) {
         s<-msg
     }
 }
+type Cell struct {
+    x int
+    y int
+    alive bool
+    neighbors chan bool // This is the channel that subscribes to other neighbors
+    subscribers []chan bool // This is everyone the cell should notify
+    done chan bool
+ }
+
 
 func (c *Cell) Subscribe(subscriber chan bool) { // could return dispose method to unsubscribe like rx?  
     c.subscribers = append(c.subscribers,subscriber)
@@ -40,7 +41,6 @@ func (c *Cell) notify() {
         for _, s := range c.subscribers {
             go func(s chan bool) { s <-true}(s)
         }
-        log.Println("*Notified")
     }
 }
 
@@ -59,14 +59,6 @@ func newWorld(size int) World {
 }
 
 func (c *Cell) StartPlaying() {
-     // Notify other neigbors that if you are alive
-     // Go notify?
-    // RACE CONDITION!!! Rewrite to use messages or something
-    // Or is it that i am blocking...
-    // Send message to inc-function?
-    // Sending and recieving works, same nr (from 14 to 22 something depending on cores)
-    // might be sending on different something... something is not sync'ed
-//     if (c.alive) { go log.Println("Notified")}
      for {
          nrOfAliveNeighbors := 0
          for {
@@ -77,29 +69,18 @@ func (c *Cell) StartPlaying() {
                     switch msg {
 //                    fmt.Printf("I am cell %d, %d and I got the done signal\n", c.x, c.y)
                         case true:
-                            if (nrOfAliveNeighbors > 0) {
-            //                    fmt.Printf("I am cell %d, %d and I have %d alive neighbors\n", c.x, c.y, nrOfAliveNeighbors)
-                            }
-                            // Move on and kill yourself or spawn 
-                            if ((nrOfAliveNeighbors== 2 || nrOfAliveNeighbors==3)&& c.alive) {
-            //                        fmt.Println("I keep on living")
-                                    //c.alive = true // live ons
-                                } else if (!c.alive && nrOfAliveNeighbors== 3) {
-            //                        fmt.Println("I spawn")
+                            // Ignore rule about keep on living
+                                if (!c.alive && nrOfAliveNeighbors== 3) {
                                     c.alive = true
                                 } else if (c.alive && nrOfAliveNeighbors> 3) {
-            //                        fmt.Println("Starvation")
                                     c.alive = false
                                 } else if (c.alive && nrOfAliveNeighbors< 2) {
-            //                        fmt.Println("killing myself since there are less than two")
                                     c.alive = false
                                 }
                         case false:
-                         nrOfAliveNeighbors = 0
-                         c.notify()
-                    // Send done signal to confirm, for now just use timer in main loop
-                    // Need to wait until everybody is ready to do this... Sort of post-done
-                }
+                            nrOfAliveNeighbors = 0
+                            c.notify()
+                    }
                 }
              }
          }
@@ -139,20 +120,16 @@ func (w *World) InitGleiter() {
 }
 
 var generations = 0
+//var c = exec.Command("clear")
+
 func (w *World) Print() {
-   world := *w // gues better to dereference when not mutating , or make function that takes world instead of method
-   c := exec.Command("clear")
-   c.Stdout = os.Stdout
-   c.Run()
-   cells := world.cells
+//   c.Run()
    fmt.Println(generations)
    generations++
    fmt.Printf("\n")
-   for i := range cells {
-        for j := range cells[i] {
-            if (cells[i][j].alive) {
-                fmt.Printf("*")
-            } else {
+   for i := range w.cells {
+        for j := range w.cells[i] {
+            if (w.cells[i][j].alive) { fmt.Printf("*") } else {
                 fmt.Printf("X")
             }
         }
@@ -161,38 +138,40 @@ func (w *World) Print() {
 }
 
 func main() {
+ //   c.Stdout = os.Stdout
     runtime.GOMAXPROCS(4)
     world := newWorld(10)
-//    world.InitGleiter()
-    world.InitBlinker()
+ //   world.InitGleiter()
+   world.InitBlinker()
     world.Print()
     cells := world.cells
     for i := range cells {
         for j := range cells[i] {
            // find neighbors and add them to channellist
+            n := cells[i][j].neighbors
             if ((i-1) >= 0 && (j-1) >= 0) {
-                cells[i-1][j-1].Subscribe(cells[i][j].neighbors)
+                cells[i-1][j-1].Subscribe(n)
             }
             if ((i-1) >= 0) {
-                cells[i-1][j].Subscribe(cells[i][j].neighbors)
+                cells[i-1][j].Subscribe(n)
             }
             if ((j-1) >= 0) {
-                cells[i][j-1].Subscribe(cells[i][j].neighbors)
+                cells[i][j-1].Subscribe(n)
             }
             if ((i+1) < 10) {
-                cells[i+1][j].Subscribe(cells[i][j].neighbors)
+                cells[i+1][j].Subscribe(n)
             }
             if ((j+1) < 10) {
-                cells[i][j+1].Subscribe(cells[i][j].neighbors)
+                cells[i][j+1].Subscribe(n)
             }
             if ((i+1) < 10 && (j+1) < 10) {
-                cells[i+1][j+1].Subscribe(cells[i][j].neighbors)
+                cells[i+1][j+1].Subscribe(n)
             }
             if ((i-1) >= 0 && (j+1) < 10) {
-                cells[i-1][j+1].Subscribe(cells[i][j].neighbors)
+                cells[i-1][j+1].Subscribe(n)
             }
             if ((i+1) < 10 && (j-1) >= 0) {
-                cells[i+1][j-1].Subscribe(cells[i][j].neighbors)
+                cells[i+1][j-1].Subscribe(n)
             }
             go func(i,j int) {
                 world.cells[i][j].StartPlaying()
@@ -200,13 +179,15 @@ func main() {
         }
     }
     time.Sleep(100*time.Millisecond)
-    timer := time.Tick(1000* time.Millisecond)
+    timer := time.Tick(40* time.Millisecond)
+    i:= 0
     for _ = range timer{
-        world.Print()
+        i++
+  //      if (i % 11 == 0) {
+            world.Print()
+//        }
         world.proceed(false)
-        time.Sleep(500*time.Millisecond)
+        time.Sleep(30*time.Millisecond)
         world.proceed(true)
     }
 }
-
-
