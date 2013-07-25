@@ -60,31 +60,26 @@ func newWorld() World {
 }
 
 func (c *Cell) StartPlaying() {
-     for {
          nrOfAliveNeighbors := 0
+         c.notify()
          for {
              select {
                 case <-c.neighbors:
                    nrOfAliveNeighbors++
-                case msg := <-c.done:
-                    switch msg {
-//                    fmt.Printf("I am cell %d, %d and I got the done signal\n", c.x, c.y)
-                        case true:
-                            // Ignore rule about keep on living
-                                if (!c.alive && nrOfAliveNeighbors== 3) {
-                                    c.alive = true
-                                } else if (c.alive && nrOfAliveNeighbors> 3) {
-                                    c.alive = false
-                                } else if (c.alive && nrOfAliveNeighbors< 2) {
-                                    c.alive = false
-                                }
-                        case false:
-                            nrOfAliveNeighbors = 0
-                            c.notify()
+                case <- time.Tick(time.Second):
+                    if (!c.alive && nrOfAliveNeighbors== 3) {
+                        c.alive = true
+                    } else if (c.alive && nrOfAliveNeighbors> 3) {
+                        c.alive = false
+                    } else if (c.alive && nrOfAliveNeighbors< 2) {
+                        c.alive = false
                     }
+                    <-time.After(1*time.Second)
+                    c.notify()
+                    <-time.After(1*time.Second)
+                    nrOfAliveNeighbors = 0
                 }
              }
-         }
 }
 
 func (c *Cell) nrOfNeighbors() int{
@@ -189,14 +184,7 @@ func main() {
     }
     time.Sleep(100*time.Millisecond)
     timer := time.Tick(200* time.Millisecond)
-    i:= 0
     for _ = range timer{
-        i++
-//        if (i % 11 == 0) {
-            world.Print()
-//        }
-        world.proceed(false)
-        time.Sleep(100*time.Millisecond)
-        world.proceed(true)
+        world.Print()
     }
 }
