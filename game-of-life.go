@@ -61,7 +61,12 @@ func newWorld() World {
 
 func (c *Cell) StartPlaying() {
          nrOfAliveNeighbors := 0
-         c.notify()
+                     go func() {
+                        time.Sleep(500*time.Millisecond)
+//                        fmt.Printf("Cell %d %d is %b\n", c.x, c.y, c.alive)
+                        c.notify()
+                    }()
+        
          for {
              select {
                 case <-c.neighbors:
@@ -74,12 +79,14 @@ func (c *Cell) StartPlaying() {
                     } else if (c.alive && nrOfAliveNeighbors< 2) {
                         c.alive = false
                     }
-                    <-time.After(1*time.Second)
-                    c.notify()
-                    <-time.After(1*time.Second)
                     nrOfAliveNeighbors = 0
+                    go func() {
+                        time.Sleep(500*time.Millisecond)
+//                        fmt.Printf("Cell %d %d is %b\n", c.x, c.y, c.alive)
+                        c.notify()
+                    }()
                 }
-             }
+          }
 }
 
 func (c *Cell) nrOfNeighbors() int{
