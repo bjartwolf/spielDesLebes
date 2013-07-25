@@ -3,6 +3,7 @@ package main
 import "fmt"
 import "time"
 import "os"
+import "log"
 import "runtime"
 import "os/exec"
 
@@ -24,11 +25,9 @@ func (w *World) Subscribe (subscriber chan bool) {
     w.subscribers = append(w.subscribers,subscriber)
 }
 
-func (w *World) notify() {
-    for _, subscriber := range w.subscribers {
-        go func(s chan bool) {
-            s<-true
-        }(subscriber)
+func (w *World) proceed(msg bool) {
+    for _, s := range w.subscribers {
+        s<-msg
     }
 }
 
@@ -37,10 +36,11 @@ func (c *Cell) Subscribe(subscriber chan bool) { // could return dispose method 
 }
 
 func (c *Cell) notify() {
-    for _, subscriber := range c.subscribers {
-        if (c.alive) {
-            go func(s chan bool) {s<-true}(subscriber)
+    if (c.alive) {
+        for _, s := range c.subscribers {
+            s<-true
         }
+        log.Println("*Notified")
     }
 }
 
@@ -52,45 +52,55 @@ func newWorld(size int) World {
         cells[i] = make([]Cell, size)
         for j := range(cells[i]) {
             cells[i][j] = Cell{i,j,false, make(chan bool, 8), nil, make(chan bool)}
+            world.Subscribe(cells[i][j].done)
         }
     }
     return world
 }
 
 func (c *Cell) StartPlaying() {
-    round:= 1
-         // Notify other neigbors that if you are alive
-         // Go notify?
+     // Notify other neigbors that if you are alive
+     // Go notify?
+    // RACE CONDITION!!! Rewrite to use messages or something
+    // Or is it that i am blocking...
+    // Send message to inc-function?
+    // Sending and recieving works, same nr (from 14 to 22 something depending on cores)
+    // might be sending on different something... something is not sync'ed
+//     if (c.alive) { go log.Println("Notified")}
+     for {
          nrOfAliveNeighbors := 0
-         c.notify()
          for {
              select {
                 case <-c.neighbors:
-                    nrOfAliveNeighbors++
-                case <-c.done:
+                   nrOfAliveNeighbors++
+                case msg := <-c.done:
+                    switch msg {
 //                    fmt.Printf("I am cell %d, %d and I got the done signal\n", c.x, c.y)
-                    if (nrOfAliveNeighbors > 0) {
-                        fmt.Printf("I am cell %d, %d and I have %d alive neighbors\n", c.x, c.y, nrOfAliveNeighbors)
-                    }
-                    round++
-//                    fmt.Println(round)
-                    // Move on and kill yourself or spawn 
-                    if ((nrOfAliveNeighbors== 2 || nrOfAliveNeighbors==3)&& c.alive) {
-                            fmt.Println("I keep on living")
-                            //c.alive = true // live ons
-                        } else if (!c.alive && nrOfAliveNeighbors== 3) {
-                            fmt.Println("I spawn")
-                            c.alive = true
-                        } else if (c.alive && nrOfAliveNeighbors> 3) {
-                            fmt.Println("killing myself")
-                            c.alive = false
-                        } else if (c.alive && nrOfAliveNeighbors< 2) {
-                            fmt.Println("killing myself since there are less than two")
-                            c.alive = false
-                        }
+                        case true:
+                            if (nrOfAliveNeighbors > 0) {
+            //                    fmt.Printf("I am cell %d, %d and I have %d alive neighbors\n", c.x, c.y, nrOfAliveNeighbors)
+                            }
+                            // Move on and kill yourself or spawn 
+                            if ((nrOfAliveNeighbors== 2 || nrOfAliveNeighbors==3)&& c.alive) {
+            //                        fmt.Println("I keep on living")
+                                    //c.alive = true // live ons
+                                } else if (!c.alive && nrOfAliveNeighbors== 3) {
+            //                        fmt.Println("I spawn")
+                                    c.alive = true
+                                } else if (c.alive && nrOfAliveNeighbors> 3) {
+            //                        fmt.Println("Starvation")
+                                    c.alive = false
+                                } else if (c.alive && nrOfAliveNeighbors< 2) {
+            //                        fmt.Println("killing myself since there are less than two")
+                                    c.alive = false
+                                }
+                        case false:
+                         nrOfAliveNeighbors = 0
+                         c.notify()
                     // Send done signal to confirm, for now just use timer in main loop
-                    nrOfAliveNeighbors = 0
-                    c.notify()
+                    // Need to wait until everybody is ready to do this... Sort of post-done
+                }
+                }
              }
          }
 }
@@ -135,8 +145,8 @@ func (w *World) Print() {
    c.Stdout = os.Stdout
    c.Run()
    cells := world.cells
-   generations++
    fmt.Println(generations)
+   generations++
    fmt.Printf("\n")
    for i := range cells {
         for j := range cells[i] {
@@ -153,10 +163,9 @@ func (w *World) Print() {
 func main() {
     runtime.GOMAXPROCS(1)
     world := newWorld(10)
-    world.InitGleiter()
-   //world.InitBlinker()
+//    world.InitGleiter()
+    world.InitBlinker()
     world.Print()
-    timer := time.Tick(1000 * time.Millisecond)
     cells := world.cells
     for i := range cells {
         for j := range cells[i] {
@@ -170,31 +179,34 @@ func main() {
             if ((j-1) >= 0) {
                 cells[i][j-1].Subscribe(cells[i][j].neighbors)
             }
-            if ((i+1) <= 9) {
+            if ((i+1) < 10) {
                 cells[i+1][j].Subscribe(cells[i][j].neighbors)
             }
-            if ((j+1) <= 9) {
+            if ((j+1) < 10) {
                 cells[i][j+1].Subscribe(cells[i][j].neighbors)
             }
-            if ((i+1) <= 9 && (j+1) <= 9) {
+            if ((i+1) < 10 && (j+1) < 10) {
                 cells[i+1][j+1].Subscribe(cells[i][j].neighbors)
             }
-            if ((i-1) >= 0 && (j+1) <= 9) {
+            if ((i-1) >= 0 && (j+1) < 10) {
                 cells[i-1][j+1].Subscribe(cells[i][j].neighbors)
             }
-            if ((i+1) <= 9 && (j-1) >= 0) {
+            if ((i+1) < 10 && (j-1) >= 0) {
                 cells[i+1][j-1].Subscribe(cells[i][j].neighbors)
             }
-            world.Subscribe(cells[i][j].done)
             go func(i,j int) {
                 world.cells[i][j].StartPlaying()
             }(i,j)
         }
     }
     time.Sleep(1*time.Second)
+    timer := time.Tick(1* time.Second)
     for _ = range timer{
         world.Print()
-        go world.notify()
+        world.proceed(false)
+        time.Sleep(500*time.Millisecond)
+        world.proceed(true)
     }
 }
+
 
