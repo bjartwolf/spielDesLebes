@@ -38,7 +38,7 @@ func (c *Cell) Subscribe(subscriber chan bool) { // could return dispose method 
 func (c *Cell) notify() {
     if (c.alive) {
         for _, s := range c.subscribers {
-            s<-true
+            go func(s chan bool) { s <-true}(s)
         }
         log.Println("*Notified")
     }
@@ -161,7 +161,7 @@ func (w *World) Print() {
 }
 
 func main() {
-    runtime.GOMAXPROCS(1)
+    runtime.GOMAXPROCS(4)
     world := newWorld(10)
 //    world.InitGleiter()
     world.InitBlinker()
@@ -199,8 +199,8 @@ func main() {
             }(i,j)
         }
     }
-    time.Sleep(1*time.Second)
-    timer := time.Tick(1* time.Second)
+    time.Sleep(100*time.Millisecond)
+    timer := time.Tick(1000* time.Millisecond)
     for _ = range timer{
         world.Print()
         world.proceed(false)
