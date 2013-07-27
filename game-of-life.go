@@ -68,7 +68,10 @@ func (c *Cell) StartPlaying() {
                         case "eg łevar":
                             nrOfAliveNeighbors++
                     }
-                case <- time.Tick(time.Second):
+                 case <- time.Tick(time.Second):
+                    if (nrOfAliveNeighbors > 0) {
+//                        fmt.Printf("Nr of: %d for cell %d, %d\n", nrOfAliveNeighbors, c.x, c.y)
+                    }
                     if (!c.alive && nrOfAliveNeighbors== 3) {
                         c.Spawn()
                     } else if (c.alive && nrOfAliveNeighbors> 3) {
@@ -76,26 +79,8 @@ func (c *Cell) StartPlaying() {
                     } else if (c.alive && nrOfAliveNeighbors< 2) {
                         c.Die()
                     }
-                    nrOfAliveNeighbors = 0
                 }
           }
-}
-
-func (c *Cell) nrOfNeighbors() int{
-    nrOfNeighbors := 8
-    cell := *c
-    x := cell.x
-    y := cell.y
-    if (x == 0 || x == width-1 || y == 0 || y == height-1) { // sidewall
-        nrOfNeighbors -= 3
-    }
-    if ( (x== 0 && y == 0) ||
-         (x== width-1 && y == 0) ||
-         (x== 0 && y == height-1) ||
-         (x== width-1 && y == height-1)) {
-         nrOfNeighbors = 3
-    }
-    return nrOfNeighbors
 }
 
 func (w *World) InitBlinker() {
@@ -132,7 +117,9 @@ func (w *World) Print() {
    fmt.Printf("\n")
    for i := range w.cells {
         for j := range w.cells[i] {
-            if (w.cells[i][j].alive) { fmt.Printf("*") } else {
+            if (w.cells[i][j].alive) {
+                fmt.Printf("*")
+            } else {
                 fmt.Printf("X")
             }
         }
@@ -142,12 +129,7 @@ func (w *World) Print() {
 
 func main() {
     runtime.GOMAXPROCS(4)
-   world := newWorld()
- //   world.InitGleiter()
- //  world.InitBlinker()
-   // need to init with goroutine
-   world.InitToad()
-    world.Print()
+    world := newWorld()
     cells := world.cells
     for i := range cells {
         for j := range cells[i] {
@@ -182,8 +164,14 @@ func main() {
             }(i,j)
         }
     }
-    time.Sleep(100*time.Millisecond)
-    timer := time.Tick(200* time.Millisecond)
+ //   world.InitGleiter()
+ //  world.InitBlinker()
+   // need to init with goroutine
+    time.Sleep(50 * time.Millisecond)
+    world.InitToad()
+    time.Sleep(50 * time.Millisecond)
+    world.Print()
+    timer := time.Tick(500* time.Millisecond)
     for _ = range timer{
         world.Print()
     }
