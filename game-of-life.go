@@ -28,7 +28,7 @@ func (c *Cell) Subscribe(subscriber chan string) { // could return dispose metho
 
 func (c *Cell) Die() {
     c.alive = false
-    c.notify("eg đøyr")
+    c.notify("fe đøyr, frendar døyr, en sjølv døyr på samme vis")
 }
 
 func (c *Cell) Spawn() {
@@ -63,15 +63,12 @@ func (c *Cell) StartPlaying() {
              select {
                  case msg := <-c.neighbors:
                     switch msg {
-                        case "eg đøyr":
+                        case "fe đøyr, frendar døyr, en sjølv døyr på samme vis":
                             nrOfAliveNeighbors--
                         case "eg łevar":
                             nrOfAliveNeighbors++
                     }
                  case <- time.Tick(time.Second):
-                    if (nrOfAliveNeighbors > 0) {
-//                        fmt.Printf("Nr of: %d for cell %d, %d\n", nrOfAliveNeighbors, c.x, c.y)
-                    }
                     if (!c.alive && nrOfAliveNeighbors== 3) {
                         c.Spawn()
                     } else if (c.alive && nrOfAliveNeighbors> 3) {
