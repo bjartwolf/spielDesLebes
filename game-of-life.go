@@ -11,27 +11,19 @@ const width int = 10
 
 type World struct {
     cells [][]Cell
-    subscribers []chan bool // This is everyone the cell should notify about turns
 }
 
-func (w *World) Subscribe (subscriber chan bool) {
-    w.subscribers = append(w.subscribers,subscriber)
-}
-
-func (w *World) proceed(msg bool) {
-    for _, s := range w.subscribers {
-        s<-msg
-    }
-}
 type Cell struct {
     x int
     y int
     alive bool
     neighbors chan bool // This is the channel that subscribes to other neighbors
-    subscribers []chan bool // This is everyone the cell should notify
-    done chan bool
+    subscribers []chan bool// This is everyone the cell should notify done chan bool
+    done chan bool// This is everyone the cell should notify done chan bool
  }
-
+//đ
+// ctrl+v u nnnn
+//ł
 
 func (c *Cell) Subscribe(subscriber chan bool) { // could return dispose method to unsubscribe like rx?  
     c.subscribers = append(c.subscribers,subscriber)
@@ -46,14 +38,12 @@ func (c *Cell) notify() {
 }
 
 func newWorld() World {
-    var subscribers []chan bool
-    world := World { make([][]Cell, height), subscribers}
+    world := World { make([][]Cell, height)}
     cells := world.cells
     for i := range cells {
         cells[i] = make([]Cell, width)
         for j := range(cells[i]) {
             cells[i][j] = Cell{i,j,false, make(chan bool, 8), nil, make(chan bool)}
-            world.Subscribe(cells[i][j].done)
         }
     }
     return world
