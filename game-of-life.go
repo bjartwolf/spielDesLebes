@@ -61,12 +61,11 @@ func newWorld() World {
 
 func (c *Cell) StartPlaying() {
          nrOfAliveNeighbors := 0
-                     go func() {
-                        time.Sleep(500*time.Millisecond)
-//                        fmt.Printf("Cell %d %d is %b\n", c.x, c.y, c.alive)
-                        c.notify()
-                    }()
-        
+         go func() { // Delays notification to make sure all cells are alive and recieving
+                time.Sleep(500*time.Millisecond)
+                c.notify()
+         }()
+
          for {
              select {
                 case <-c.neighbors:
@@ -82,7 +81,6 @@ func (c *Cell) StartPlaying() {
                     nrOfAliveNeighbors = 0
                     go func() {
                         time.Sleep(500*time.Millisecond)
-//                        fmt.Printf("Cell %d %d is %b\n", c.x, c.y, c.alive)
                         c.notify()
                     }()
                 }
