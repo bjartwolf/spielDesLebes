@@ -16,7 +16,7 @@ type World struct {
 type Cell struct {
     x int
     y int
-    alive bool
+    levande bool
     neighbors chan string// This is the channel that subscribes to other neighbors
     subscribers []chan string// This is everyone the cell should notify done chan bool
  }
@@ -26,13 +26,13 @@ func (c *Cell) Subscribe(subscriber chan string) { // could return dispose metho
     c.subscribers = append(c.subscribers,subscriber)
 }
 
-func (c *Cell) Die() {
-    c.alive = false
+func (c *Cell) Dø() {
+    c.levande = false
     c.notify("fe đøyr, frendar døyr, en sjølv døyr på samme vis")
 }
 
-func (c *Cell) Spawn() {
-    c.alive = true
+func (c *Cell) Våkne() {
+    c.levande = true
     c.notify("eg łevar")
 }
 
@@ -58,23 +58,23 @@ func newWorld() World {
 }
 
 func (c *Cell) StartPlaying() {
-         nrOfAliveNeighbors := 0
+         levandeGranner := 0
          for {
              select {
                  case msg := <-c.neighbors:
                     switch msg {
                         case "fe đøyr, frendar døyr, en sjølv døyr på samme vis":
-                            nrOfAliveNeighbors--
+                            levandeGranner--
                         case "eg łevar":
-                            nrOfAliveNeighbors++
+                            levandeGranner++
                     }
                  case <- time.Tick(time.Second):
-                    if (!c.alive && nrOfAliveNeighbors== 3) {
-                        c.Spawn()
-                    } else if (c.alive && nrOfAliveNeighbors> 3) {
-                        c.Die()
-                    } else if (c.alive && nrOfAliveNeighbors< 2) {
-                        c.Die()
+                    if (!c.levande && levandeGranner== 3) {
+                        c.Våkne()
+                    } else if (c.levande && levandeGranner> 3) {
+                        c.Dø()
+                    } else if (c.levande && levandeGranner< 2) {
+                        c.Dø()
                     }
                 }
           }
@@ -82,28 +82,28 @@ func (c *Cell) StartPlaying() {
 
 func (w *World) InitBlinker() {
     world := *w
-    world.cells[4][5].Spawn()
-    world.cells[5][5].Spawn()
-    world.cells[6][5].Spawn()
+    world.cells[4][5].Våkne()
+    world.cells[5][5].Våkne()
+    world.cells[6][5].Våkne()
 }
 
 func (w *World) InitGleiter() {
     world := *w
-    world.cells[0][7].Spawn()
-    world.cells[1][7].Spawn()
-    world.cells[2][7].Spawn()
-    world.cells[2][8].Spawn()
-    world.cells[1][9].Spawn()
+    world.cells[0][7].Våkne()
+    world.cells[1][7].Våkne()
+    world.cells[2][7].Våkne()
+    world.cells[2][8].Våkne()
+    world.cells[1][9].Våkne()
 }
 
 func (w *World) InitToad() {
     world := *w
-    world.cells[4][4].Spawn()
-    world.cells[4][5].Spawn()
-    world.cells[4][6].Spawn()
-    world.cells[5][5].Spawn()
-    world.cells[5][6].Spawn()
-    world.cells[5][7].Spawn()
+    world.cells[4][4].Våkne()
+    world.cells[4][5].Våkne()
+    world.cells[4][6].Våkne()
+    world.cells[5][5].Våkne()
+    world.cells[5][6].Våkne()
+    world.cells[5][7].Våkne()
 }
 
 
@@ -114,7 +114,7 @@ func (w *World) Print() {
    fmt.Printf("\n")
    for i := range w.cells {
         for j := range w.cells[i] {
-            if (w.cells[i][j].alive) {
+            if (w.cells[i][j].levande) {
                 fmt.Printf("*")
             } else {
                 fmt.Printf("X")
