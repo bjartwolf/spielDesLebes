@@ -19,7 +19,6 @@ type Cell struct {
     alive bool
     neighbors chan bool // This is the channel that subscribes to other neighbors
     subscribers []chan bool// This is everyone the cell should notify done chan bool
-    done chan bool// This is everyone the cell should notify done chan bool
  }
 //đ
 // ctrl+v u nnnn
@@ -43,7 +42,7 @@ func newWorld() World {
     for i := range cells {
         cells[i] = make([]Cell, width)
         for j := range(cells[i]) {
-            cells[i][j] = Cell{i,j,false, make(chan bool, 8), nil, make(chan bool)}
+            cells[i][j] = Cell{i,j,false, make(chan bool, 8), nil}
         }
     }
     return world
