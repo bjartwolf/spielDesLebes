@@ -5,8 +5,8 @@ import (
     "runtime"
 )
 
-const height int = 20
-const width int = 20
+const height int = 10
+const width int = 10
 
 func main() {
     runtime.GOMAXPROCS(4)
@@ -25,29 +25,30 @@ func main() {
             if ((j-1) >= 0) {
                 cells[i][j-1].Subscribe(n)
             }
-            if ((i+1) < 10) {
+            if ((i+1) < height) {
                 cells[i+1][j].Subscribe(n)
             }
-            if ((j+1) < 10) {
+            if ((j+1) < width) {
                 cells[i][j+1].Subscribe(n)
             }
-            if ((i+1) < 10 && (j+1) < 10) {
+            if ((i+1) < height && (j+1) < width) {
                 cells[i+1][j+1].Subscribe(n)
             }
-            if ((i-1) >= 0 && (j+1) < 10) {
+            if ((i-1) >= 0 && (j+1) < width) {
                 cells[i-1][j+1].Subscribe(n)
             }
-            if ((i+1) < 10 && (j-1) >= 0) {
+            if ((i+1) < height && (j-1) >= 0) {
                 cells[i+1][j-1].Subscribe(n)
             }
+            // Starts the game, but all cells are still dead
             go func(i,j int) {
                 world.cells[i][j].Spawn()
             }(i,j)
         }
     }
- //  world.InitGleiter()
+   world.InitGleiter()
  //  world.InitBlinker()
-    world.InitToad()
+ //   world.InitToad()
     world.Print()
     timer := time.Tick(1000* time.Millisecond)
     for _ = range timer{
