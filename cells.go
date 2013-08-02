@@ -1,5 +1,6 @@
 package main
 import "time"
+import "fmt"
 
 type Cell struct {
     x int
@@ -7,17 +8,37 @@ type Cell struct {
     levande bool
     neighbors chan string
     subscribers []chan string
+    Subscribe chan chan string
  }
 
+func NewCell(x, y int) *Cell {
+    // How would this do unsubscribe? Can the for thing return something somehow someway?
+    c := Cell{x,y,false,make(chan string, 8), nil, make(chan chan string)}
+    go c.listenForSubscribers()
+    return &c
+}
+
+func (cell *Cell) listenForSubscribers(){
+    for {
+        sub := <-cell.Subscribe
+        cell.subscribers = append(cell.subscribers, sub)
+    }
+}
+
+
+
 // Subscribe adds a channel to a cells list of subscribers for notification 
+/*
 func (c *Cell) Subscribe(subscriber chan string) { // could return dispose method to unsubscribe like rx?  
     c.subscribers = append(c.subscribers,subscriber)
-}
+}*/
+
 
 // Notify notifies subscribing cells with a message with a delay [ms]
 func (c *Cell) notify(msg string, delay time.Duration) {
     go func(c *Cell, msg string) {
             time.Sleep(delay*time.Millisecond)
+            fmt.Println(len(c.subscribers))
             for _, s := range c.subscribers {
                 s <- msg
             }

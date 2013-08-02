@@ -2,16 +2,16 @@ package main
 import "fmt"
 
 type World struct {
-    cells [][]Cell
+    cells [][]*Cell
 }
 
 func newWorld() World {
-    world := World { make([][]Cell, height)}
+    world := World { make([][]*Cell, height)}
     cells := world.cells
     for i := range cells {
-        cells[i] = make([]Cell, width)
+        cells[i] = make([]*Cell, width)
         for j := range(cells[i]) {
-            cells[i][j] = Cell{i,j,false, make(chan string, 8), nil}
+            cells[i][j] = NewCell(i,j)
         }
     }
     return world

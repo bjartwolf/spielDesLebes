@@ -2,6 +2,7 @@ package main
 
 import (
     "time"
+    "fmt"
     "runtime"
 )
 
@@ -17,31 +18,34 @@ func main() {
            // find neighbors and add them to channellist
             n := cells[i][j].neighbors
             if ((i-1) >= 0 && (j-1) >= 0) {
-                cells[i-1][j-1].Subscribe(n)
+                cells[i-1][j-1].Subscribe <- n
             }
             if ((i-1) >= 0) {
-                cells[i-1][j].Subscribe(n)
+                cells[i-1][j].Subscribe <- n
             }
             if ((j-1) >= 0) {
-                cells[i][j-1].Subscribe(n)
+                cells[i][j-1].Subscribe <- n
             }
             if ((i+1) < height) {
-                cells[i+1][j].Subscribe(n)
+                cells[i+1][j].Subscribe <- n
             }
             if ((j+1) < width) {
-                cells[i][j+1].Subscribe(n)
+                cells[i][j+1].Subscribe <- n
             }
             if ((i+1) < height && (j+1) < width) {
-                cells[i+1][j+1].Subscribe(n)
+                cells[i+1][j+1].Subscribe <- n
             }
             if ((i-1) >= 0 && (j+1) < width) {
-                cells[i-1][j+1].Subscribe(n)
+                cells[i-1][j+1].Subscribe <- n
             }
             if ((i+1) < height && (j-1) >= 0) {
-                cells[i+1][j-1].Subscribe(n)
+                cells[i+1][j-1].Subscribe <- n
             }
+//            fmt.Printf("Cell %d, %d has %d neighbors\n", 
             // Starts the game, but all cells are still dead
             go func(i,j int) {
+                time.Sleep(time.Second)
+                fmt.Println(len(world.cells[i][j].subscribers))
                 world.cells[i][j].Spawn()
             }(i,j)
         }
