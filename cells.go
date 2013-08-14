@@ -1,6 +1,5 @@
 package main
 import "time"
-import "fmt"
 
 type Cell struct {
     x int
@@ -38,7 +37,6 @@ func (c *Cell) Subscribe(subscriber chan string) { // could return dispose metho
 func (c *Cell) notify(msg string, delay time.Duration) {
     go func(c *Cell, msg string) {
             time.Sleep(delay*time.Millisecond)
-            fmt.Println(len(c.subscribers))
             for _, s := range c.subscribers {
                 s <- msg
             }

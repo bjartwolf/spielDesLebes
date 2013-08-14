@@ -2,7 +2,6 @@ package main
 
 import (
     "time"
-    "fmt"
     "runtime"
 )
 
@@ -17,35 +16,25 @@ func main() {
         for j := range cells[i] {
            // find neighbors and add them to channellist
             n := cells[i][j].neighbors
-            if ((i-1) >= 0 && (j-1) >= 0) {
-                cells[i-1][j-1].Subscribe <- n
+            for vert := -1; vert <= 1; vert++ {
+              for horiz := -1; horiz <= 1; horiz++ {
+                if vert == 0 && horiz == 0 {
+                  continue
+                }
+                vertical := (i+vert) % height
+                horizontal := (j+horiz) % width 
+                if vertical < 0 {
+                  vertical += height
+                }
+                if horizontal < 0 {
+                  horizontal += width
+                }
+                cells[vertical][horizontal].Subscribe <- n
+              }
             }
-            if ((i-1) >= 0) {
-                cells[i-1][j].Subscribe <- n
-            }
-            if ((j-1) >= 0) {
-                cells[i][j-1].Subscribe <- n
-            }
-            if ((i+1) < height) {
-                cells[i+1][j].Subscribe <- n
-            }
-            if ((j+1) < width) {
-                cells[i][j+1].Subscribe <- n
-            }
-            if ((i+1) < height && (j+1) < width) {
-                cells[i+1][j+1].Subscribe <- n
-            }
-            if ((i-1) >= 0 && (j+1) < width) {
-                cells[i-1][j+1].Subscribe <- n
-            }
-            if ((i+1) < height && (j-1) >= 0) {
-                cells[i+1][j-1].Subscribe <- n
-            }
-//            fmt.Printf("Cell %d, %d has %d neighbors\n", 
             // Starts the game, but all cells are still dead
             go func(i,j int) {
                 time.Sleep(time.Second)
-                fmt.Println(len(world.cells[i][j].subscribers))
                 world.cells[i][j].Spawn()
             }(i,j)
         }
